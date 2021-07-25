@@ -1,0 +1,11 @@
+{
+  "name": "tracing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "tracer.js",
+  "scripts": {
+    "test": "node tracer.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
