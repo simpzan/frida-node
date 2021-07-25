@@ -35,11 +35,21 @@ function writeChromeTracingFile(filename) {
     log.i(`writing chrome tracing file ${filename}`);
     const sink = fs.createWriteStream(filename);
     sink.write("[\n");
+    const tids = new Set();
     for (const trace of events) {
+        tids.add(trace.tid);
         const fn = functions[trace.addr];
         trace.name = fn.demangledName || fn.name;
         trace.ts = trace.ts * 1000;
         sink.write(JSON.stringify(trace));
+        sink.write(",\n");
+    }
+    const pid = events[0].pid;
+    for (const tid of tids) {
+        const threadName = utils.getThreadName(pid, tid);
+        const name = `${threadName}/${tid}`;
+        const entry = {"ts":0, "ph":"M", "name":"thread_name", pid, tid, "args":{name}};
+        sink.write(JSON.stringify(entry));
         sink.write(",\n");
     }
     sink.write("{}]\n");
