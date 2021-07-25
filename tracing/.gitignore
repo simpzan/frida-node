@@ -1,2 +1,4 @@
+**/.DS_Store
 libnative-lib.so.json
 demangler.json
+libsurfaceflinger.so.json
