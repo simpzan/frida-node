@@ -45,23 +45,28 @@ function writeChromeTracingFile(filename) {
     sink.write("{}]\n");
     sink.end();
 }
-
-async function main() {
-    const argv = process.argv;
-    log.i("argv", argv);
-    const processName = argv[2] || "com.example.myapplication";
-    const libName = argv[3] || "libnative-lib.so";
-
+async function attachProcess(processName, sourceFilename) {
     const device = await frida.getUsbDevice();
     if (!device) return log.e('no usb device found.');
 
     log.i(`tracing process ${processName}`);
     const session = await device.attach(processName);
-    const source = fs.readFileSync("./tracee.js", "utf8");
+    const source = fs.readFileSync(sourceFilename, "utf8");
     const script = await session.createScript(source);
     script.message.connect(onMessageFromDebuggee);
     await script.load();
+    return script;
+}
 
+async function main() {
+    const argv = process.argv;
+    log.i("argv", argv);
+
+    const processName = argv[2] || "com.example.myapplication";
+    const libName = argv[3] || "libnative-lib.so";
+    const sourceFilename = "./tracee.js";
+
+    const script = await attachProcess(processName, sourceFilename);
     script.post({ type: 'startTracing', libName });
     log.i('Tracing started, press enter to stop.');
 
