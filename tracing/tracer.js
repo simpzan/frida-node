@@ -2,7 +2,8 @@
 const frida = require('../../build/frida-macos-x86_64/lib/node_modules/frida');
 const fs = require('fs');
 const utils = require('./utils.js');
-const CppDemangler = require('./CppDemangler.js');
+// const CppDemangler = require('./CppDemangler.js');
+const CppDemangler = require('./CppDemangler.node');
 
 const functions = {};
 let events = [];
