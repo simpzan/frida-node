@@ -2,6 +2,7 @@
 const frida = require('../../build/frida-macos-x86_64/lib/node_modules/frida');
 const fs = require('fs');
 const utils = require('./utils.js');
+const CppDemangler = require('./CppDemangler.js');
 
 const functions = {};
 let events = [];
@@ -20,6 +21,14 @@ function onMessageFromDebuggee(msg) {
 
 async function demangleFunctionNames() {
     log.i(`demangle function names`);
+    const demangler = new CppDemangler();
+    for (const key in functions) {
+        if (Object.hasOwnProperty.call(functions, key)) {
+            const fn = functions[key];
+            fn.demangledName = await demangler.demangle(fn.name);
+        }
+    }
+    demangler.exit();
 }
 function writeChromeTracingFile(filename) {
     log.i(`writing chrome tracing file ${filename}`);
@@ -27,7 +36,7 @@ function writeChromeTracingFile(filename) {
     sink.write("[\n");
     for (const trace of events) {
         const fn = functions[trace.addr];
-        trace.name = fn.name;
+        trace.name = fn.demangledName || fn.name;
         trace.ts = trace.ts * 1000;
         sink.write(JSON.stringify(trace));
         sink.write(",\n");
