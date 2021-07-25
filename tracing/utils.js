@@ -33,4 +33,18 @@ class StdIn {
     }
 }
 
-module.exports = { delay, StdIn };
+const fs = require('fs');
+function saveObject(obj, filename) {
+    const str = JSON.stringify(obj);
+    fs.writeFileSync(filename, str);
+}
+function loadObject(filename) {
+    try {
+        const str = fs.readFileSync(filename, 'utf8');
+        return JSON.parse(str);
+    } catch (error) {
+        return null;
+    }
+}
+
+module.exports = { delay, StdIn, saveObject, loadObject };
