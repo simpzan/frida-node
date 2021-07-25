@@ -47,4 +47,31 @@ function loadObject(filename) {
     }
 }
 
-module.exports = { delay, StdIn, saveObject, loadObject };
+function run(cmd) {
+    try {
+        console.info(`cmd: ${cmd}`);
+        const cp = require("child_process");
+        const output = cp.execSync(cmd);
+        const result = output.toString("utf8");
+        console.info(`result:\n${result}`);
+        return result.trim();
+    } catch (err) {
+        return null;
+    }
+}
+function getThreadName(pid, tid) {
+    const cmd = `adb shell cat /proc/${pid}/task/${tid}/comm`;
+    return run(cmd);
+}
+function testInteractively() {
+    const name = getThreadName(3924, 4140);
+    log(name);
+}
+
+if (require.main === module) {
+    console.log('called directly');
+    testInteractively();
+}
+
+
+module.exports = { delay, StdIn, saveObject, loadObject, getThreadName };
