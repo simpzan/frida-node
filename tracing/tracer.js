@@ -38,7 +38,7 @@ function writeChromeTracingFile(filename, functionMap) {
         tids.add(trace.tid);
         const fn = functionMap.get(trace.addr);
         trace.name = fn.demangledName || fn.name;
-        trace.ts = trace.ts * 1000;
+        // trace.ts = trace.ts * 1000;
         sink.write(JSON.stringify(trace));
         sink.write(",\n");
     }

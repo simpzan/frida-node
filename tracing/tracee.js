@@ -7,6 +7,12 @@ function log() {
 }
 log(`js runtime ${Script.runtime}`);
 
+const cm = new CModule(`
+#include <glib.h>
+int64_t getTimeMicrosecond() { return g_get_real_time(); }
+`);
+const getTimeMicrosecond = new NativeFunction(cm.getTimeMicrosecond, 'long', []);
+
 let events = [];
 function flushEvents() {
     const count = events.length;
@@ -19,7 +25,7 @@ function flushEvents() {
 function handleEvent(fn, ph, tid) {
     const pid = Process.id;
     const addr = fn.address;
-    const ts = Date.now();
+    const ts = getTimeMicrosecond();
     const event = { ph, tid, pid, addr, ts };
     // log(event);
     events.push(event);
