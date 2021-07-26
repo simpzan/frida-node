@@ -65,18 +65,16 @@ class Tracer {
 }
 
 let tracer = null;
-recv(function onMessage(msg) {
-    if (msg.type === 'startTracing') {
-        const libName = msg.libName;
+rpc.exports = {
+    startTracing(libName) {
         tracer = new Tracer(libName);
         tracer.start();
-    } else if (msg.type === 'stopTracing') {
+    },
+    stopTracing() {
         tracer.stop();
         tracer = null;
-    } else {
-        log(`unkown msg ${msg}`);
     }
-});
+};
 
 function test() {
     const libName = "libnative-lib.so";

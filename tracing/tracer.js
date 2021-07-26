@@ -77,14 +77,14 @@ async function main() {
     const sourceFilename = "./tracee.js";
 
     const script = await attachProcess(processName, sourceFilename);
-    script.post({ type: 'startTracing', libName });
+    await script.exports.startTracing(libName);
     log.i('Tracing started, press enter to stop.');
 
     const stdin = new utils.StdIn();
     await stdin.getline();
     stdin.destroy();
 
-    script.post({ type: 'stopTracing', libName });
+    await script.exports.stopTracing();
     script.unload();
 
     if (!events.length) return log.i('no trace data.');
