@@ -60,7 +60,7 @@ async function attachProcess(processName, sourceFilename) {
     log.i(`tracing process ${processName}`);
     const session = await device.attach(processName);
     const source = fs.readFileSync(sourceFilename, "utf8");
-    const script = await session.createScript(source);
+    const script = await session.createScript(source, { runtime: 'v8' });
     script.message.connect(onMessageFromDebuggee);
     await script.load();
     return script;

@@ -5,6 +5,7 @@ function log() {
     }
     console.log('tracee.js', ...args);
 }
+log(`js runtime ${Script.runtime}`);
 
 let events = [];
 function flushEvents() {
