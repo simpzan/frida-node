@@ -87,6 +87,8 @@ async function main() {
     script.post({ type: 'stopTracing', libName });
     script.unload();
 
+    if (!events.length) return log.i('no trace data.');
+
     await demangleFunctionNames();
 
     writeChromeTracingFile(`${libName}.json`);
