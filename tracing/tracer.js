@@ -5,14 +5,12 @@ const utils = require('./utils.js');
 // const CppDemangler = require('./CppDemangler.js');
 const CppDemangler = require('./CppDemangler.node');
 
-const functions = {};
+let functions = [];
 let events = [];
 function onMessageFromDebuggee(msg) {
     const type = msg.payload.type;
     if (type === 'functions') {
-        for (const fn of msg.payload.functions) {
-            functions[fn.address] = fn;
-        }
+        functions = msg.payload.functions;
     } else if (type === 'events') {
         events = events.concat(msg.payload.events);
     } else {
@@ -22,23 +20,23 @@ function onMessageFromDebuggee(msg) {
 
 async function demangleFunctionNames() {
     log.i(`demangle function names`);
+    const functionMap = new Map()
     const demangler = new CppDemangler();
-    for (const key in functions) {
-        if (Object.hasOwnProperty.call(functions, key)) {
-            const fn = functions[key];
-            fn.demangledName = await demangler.demangle(fn.name);
-        }
+    for (const fn of functions) {
+        fn.demangledName = await demangler.demangle(fn.name);
+        functionMap.set(fn.address, fn);
     }
     demangler.exit();
+    return functionMap;
 }
-function writeChromeTracingFile(filename) {
+function writeChromeTracingFile(filename, functionMap) {
     log.i(`writing chrome tracing file ${filename}`);
     const sink = fs.createWriteStream(filename);
     sink.write("[\n");
     const tids = new Set();
     for (const trace of events) {
         tids.add(trace.tid);
-        const fn = functions[trace.addr];
+        const fn = functionMap.get(trace.addr);
         trace.name = fn.demangledName || fn.name;
         trace.ts = trace.ts * 1000;
         sink.write(JSON.stringify(trace));
@@ -89,9 +87,8 @@ async function main() {
 
     if (!events.length) return log.i('no trace data.');
 
-    await demangleFunctionNames();
-
-    writeChromeTracingFile(`${libName}.json`);
+    const functionMap = await demangleFunctionNames();
+    writeChromeTracingFile(`${libName}.json`, functionMap);
     log.i('tracing done!');
 };
 main();
