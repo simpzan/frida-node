@@ -59,13 +59,18 @@ function run(cmd) {
         return null;
     }
 }
-function getThreadName(pid, tid) {
-    const cmd = `adb shell cat /proc/${pid}/task/${tid}/comm`;
-    return run(cmd);
+function getThreadNames(pid, tids) {
+    let cmd = `adb shell 'cd /proc/${pid}/task/ && cat`;
+    for (const tid of tids) cmd += ` ${tid}/comm`;
+    cmd += "'";
+    const out = run(cmd);
+    const nameMap = new Map();
+    out.split('\n').forEach((name, index) => nameMap.set(tids[index], name));
+    return nameMap;
 }
 function testInteractively() {
-    const name = getThreadName(3924, 4140);
-    log(name);
+    const names = getThreadNames(709, [709, 751, 856, 1862]);
+    log(names);
 }
 
 if (require.main === module) {
@@ -74,4 +79,4 @@ if (require.main === module) {
 }
 
 
-module.exports = { delay, StdIn, saveObject, loadObject, getThreadName };
+module.exports = { delay, StdIn, saveObject, loadObject, getThreadNames };
