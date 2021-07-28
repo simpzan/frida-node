@@ -55,7 +55,7 @@ function writeChromeTracingFile(filename, functionMap) {
         traceFile.writeObject(trace);
     }
     const pid = events[0].pid;
-    const threadNames = utils.getThreadNames(pid, tids);
+    const threadNames = utils.getThreadNames(pid, Array.from(tids));
     for (const [tid, threadName] of threadNames) {
         const name = `${threadName}/${tid}`;
         const entry = {"ts":0, "ph":"M", "name":"thread_name", pid, tid, "args":{name}};

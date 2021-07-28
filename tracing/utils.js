@@ -59,14 +59,19 @@ function run(cmd) {
         return null;
     }
 }
+function makeMap(keys, values) {
+    const klength = keys.length, vlength = values.length;
+    if (klength !== vlength) throw new Error(`length not equal: ${klength} != ${vlength}`);
+    const map = new Map();
+    for (let i = 0; i < klength; ++i) map.set(keys[i], values[i]);
+    return map;
+}
 function getThreadNames(pid, tids) {
-    let cmd = `adb shell 'cd /proc/${pid}/task/ && cat`;
-    for (const tid of tids) cmd += ` ${tid}/comm`;
-    cmd += "'";
+    const tidFiles = tids.map(tid => `${tid}/comm`).join(' ');
+    const cmd = `adb shell "cd /proc/${pid}/task/ && cat ${tidFiles}"`;
     const out = run(cmd);
-    const nameMap = new Map();
-    out.split('\n').forEach((name, index) => nameMap.set(tids[index], name));
-    return nameMap;
+    const names = out.split('\n');
+    return makeMap(tids, names);
 }
 function testInteractively() {
     const names = getThreadNames(709, [709, 751, 856, 1862]);
