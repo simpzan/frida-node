@@ -73,15 +73,14 @@ function getThreadNames(pid, tids) {
     const names = out.split('\n');
     return makeMap(tids, names);
 }
+module.exports = { delay, StdIn, saveObject, loadObject, getThreadNames, makeMap };
+
 function testInteractively() {
     const names = getThreadNames(709, [709, 751, 856, 1862]);
     log(names);
 }
-
 if (require.main === module) {
     console.log('called directly');
     testInteractively();
 }
 
-
-module.exports = { delay, StdIn, saveObject, loadObject, getThreadNames };
