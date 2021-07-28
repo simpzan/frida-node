@@ -29,29 +29,39 @@ async function demangleFunctionNames() {
     demangler.exit();
     return functionMap;
 }
+
+class ChromeTracingFile {
+    constructor(filename) {
+        this.sink = fs.createWriteStream(filename);
+        this.sink.write("[\n");
+    }
+    writeObject(obj) {
+        this.sink.write(JSON.stringify(obj));
+        this.sink.write(",\n");
+    }
+    close() {
+        this.sink.write("{}]\n");
+        this.sink.end();
+    }
+}
 function writeChromeTracingFile(filename, functionMap) {
     log.i(`writing chrome tracing file ${filename}`);
-    const sink = fs.createWriteStream(filename);
-    sink.write("[\n");
+    const traceFile = new ChromeTracingFile(filename);
     const tids = new Set();
     for (const trace of events) {
         tids.add(trace.tid);
         const fn = functionMap.get(trace.addr);
         trace.name = fn.demangledName || fn.name;
-        // trace.ts = trace.ts * 1000;
-        sink.write(JSON.stringify(trace));
-        sink.write(",\n");
+        traceFile.writeObject(trace);
     }
     const pid = events[0].pid;
     for (const tid of tids) {
         const threadName = utils.getThreadName(pid, tid);
         const name = `${threadName}/${tid}`;
         const entry = {"ts":0, "ph":"M", "name":"thread_name", pid, tid, "args":{name}};
-        sink.write(JSON.stringify(entry));
-        sink.write(",\n");
+        traceFile.writeObject(entry);
     }
-    sink.write("{}]\n");
-    sink.end();
+    traceFile.close();
 }
 async function attachProcess(processName, sourceFilename) {
     const device = await frida.getUsbDevice();
