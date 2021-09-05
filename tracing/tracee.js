@@ -19,7 +19,7 @@ function flushEvents() {
     if (count == 0) return;
 
     log(`Flushing ${count} events...`);
-    send({ type:'events', events });
+    // send({ type:'events', events });
     events = [];
 }
 function handleEvent(fn, ph, tid) {
@@ -27,31 +27,45 @@ function handleEvent(fn, ph, tid) {
     const addr = fn.address;
     const ts = getTimeMicrosecond();
     const event = { ph, tid, pid, addr, ts };
-    // log(event);
+    log(event);
     events.push(event);
 }
 function getFunctionsOfModule(libName) {
     const module = Process.getModuleByName(libName);
     const functions = module.enumerateSymbols().filter(s => {
-        return s.type === 'function' && s.size > 4;
+        return s.type === 'function' && s.size > 10;
     });
+    const map = new Map();
+    for (const fn of functions) {
+        const existing = map.get(fn.address);
+        if (existing) log(`conflict ${existing} and ${fn}`);
+        else map.set(fn.address, fn);
+    }
     return functions;
 }
 function traceLib(libName) {
-    const functions = getFunctionsOfModule(libName);
+    let functions = getFunctionsOfModule(libName);
+    // log(functions[45], functions[215]);
+    // functions = functions.slice(46, 216);
     log(`found ${functions.length} functions from ${libName}.`);
-    send({ type: 'functions', functions });
 
-    for (const fn of functions) {
-        Interceptor.attach(fn.address, {
+    // send({ type: 'functions', functions });
+
+    functions.forEach((fn, idx) => {
+        const cb = {
             onEnter: function(args) {
                 handleEvent(fn, 'B', this.threadId);
             },
             onLeave: function(retval) {
                 handleEvent(fn, 'E', this.threadId);
             }
-        });
-    }
+        };
+        try {
+            Interceptor.attach(fn.address, cb);
+        } catch (error) {
+            log(`failed to attach ${idx} ${JSON.stringify(fn)}, ${error}`);
+        }
+    });
     log('tracing started.');
 }
 
@@ -84,8 +98,9 @@ rpc.exports = {
 };
 
 function test() {
-    const libName = "libnative-lib.so";
+    const libName = "libui.so";
     const tracer = new Tracer(libName);
     tracer.start();
-    setTimeout(() => tracer.stop(), 4000);
+    setTimeout(() => tracer.stop(), 40000);
 }
+test()
